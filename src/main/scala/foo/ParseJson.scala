@@ -8,13 +8,13 @@ import play.api.libs.json.{JsSuccess, Json, Format}
 import scala.util.{Try, Success}
 
 object ParseJson {
-  def parse[T](source: Source[ByteString, T], jsonFormat: Format[Person]): Source[Person, T] =
+  def parse[T,X](source: Source[ByteString, T], jsonFormat: Format[X]): Source[X, T] =
     source.transform(() => new BufferedJsonParsingStage(jsonFormat))
 
-  class BufferedJsonParsingStage(jsonFormat: Format[Person]) extends DetachedStage[ByteString, Person] {
+  class BufferedJsonParsingStage[T](jsonFormat: Format[T]) extends DetachedStage[ByteString, T] {
     var buffer: Seq[ByteString] = Seq.empty
 
-    override def onPush(elem: ByteString, ctx: DetachedContext[Person]): UpstreamDirective = {
+    override def onPush(elem: ByteString, ctx: DetachedContext[T]): UpstreamDirective = {
       val input = elem.utf8String
       if (input == "" ||
           input == "\n" ||
@@ -27,11 +27,11 @@ object ParseJson {
       buffer :+= elem
       val collectedString = buffer.map(_.utf8String).mkString("")
       Try { Json.parse(collectedString) } match {
-        case Success(json) =>
-          jsonFormat.reads(json) match {
-            case JsSuccess(person, _) =>
+        case Success(parsedJson) =>
+          jsonFormat.reads(parsedJson) match {
+            case JsSuccess(obj, _) =>
               reset()
-              ctx.pushAndPull(person)
+              ctx.pushAndPull(obj)
             case _ =>
               reset()
               ctx.pull()
@@ -41,7 +41,7 @@ object ParseJson {
       }
     }
 
-    override def onPull(ctx: DetachedContext[Person]): DownstreamDirective =
+    override def onPull(ctx: DetachedContext[T]): DownstreamDirective =
       if (ctx.isHoldingUpstream)
         ctx.holdDownstreamAndPull()
       else
