@@ -7,7 +7,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
 import scala.concurrent.duration._
 
-class ParseJsonTest extends FunSpec with BeforeAndAfterAll with Matchers with ScalaFutures {
+class StreamingJsonParseTest extends FunSpec with BeforeAndAfterAll with Matchers with ScalaFutures {
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = 1 second)
 
@@ -21,7 +21,7 @@ class ParseJsonTest extends FunSpec with BeforeAndAfterAll with Matchers with Sc
 
     // read 1 byte at a time
     val inputStreamSource = InputStreamSource(() => this.getClass.getResourceAsStream(json), chunkSize = 1)
-    val personSource = ParseJson.parse(inputStreamSource, Person.JsonFormat.personFormat)
+    val personSource = StreamingJsonParse.parse(inputStreamSource, Person.JsonFormat.personFormat)
 
     val result = personSource.runFold(Seq.empty[Person])(_ :+ _)
 

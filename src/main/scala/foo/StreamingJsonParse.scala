@@ -7,11 +7,11 @@ import play.api.libs.json.{JsSuccess, Json, Format}
 
 import scala.util.{Try, Success}
 
-object ParseJson {
+object StreamingJsonParse {
   def parse[T,X](source: Source[ByteString, T], jsonFormat: Format[X]): Source[X, T] =
-    source.transform(() => new BufferedJsonParsingStage(jsonFormat))
+    source.transform(() => new StreamingJsonParsingStage(jsonFormat))
 
-  class BufferedJsonParsingStage[T](jsonFormat: Format[T]) extends DetachedStage[ByteString, T] {
+  class StreamingJsonParsingStage[T](jsonFormat: Format[T]) extends DetachedStage[ByteString, T] {
     var buffer: Seq[ByteString] = Seq.empty
 
     override def onPush(elem: ByteString, ctx: DetachedContext[T]): UpstreamDirective = {
