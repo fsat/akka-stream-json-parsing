@@ -1,0 +1,20 @@
+[
+  {"foo": 1},
+  {
+    "name": "John Smith",
+    "age": 32
+  },
+  [],
+  [
+    {"extra": "large"},
+    {
+      "name": "Albert Einstein",
+      "age": 65
+    }
+  ],
+  {
+    "name": "Jane Smith",
+    "age": 29
+  },
+  {"hey": "bla"}
+]
