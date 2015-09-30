@@ -5,8 +5,12 @@ import akka.stream.ActorMaterializer
 import akka.stream.io.InputStreamSource
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
+import scala.concurrent.duration._
 
 class ParseJsonTest extends FunSpec with BeforeAndAfterAll with Matchers with ScalaFutures {
+
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = 1 second)
+
   implicit val actorSystem = ActorSystem("test-only")
   val json = "/sample.json"
 
@@ -15,7 +19,8 @@ class ParseJsonTest extends FunSpec with BeforeAndAfterAll with Matchers with Sc
   it("parses json correctly") {
     implicit val materializer = ActorMaterializer()
 
-    val inputStreamSource = InputStreamSource(() => this.getClass.getResourceAsStream(json))
+    // read 1 byte at a time
+    val inputStreamSource = InputStreamSource(() => this.getClass.getResourceAsStream(json), chunkSize = 1)
     val personSource = ParseJson.parse(inputStreamSource, Person.JsonFormat.personFormat)
 
     val result = personSource.runFold(Seq.empty[Person])(_ :+ _)
@@ -23,7 +28,7 @@ class ParseJsonTest extends FunSpec with BeforeAndAfterAll with Matchers with Sc
     result.futureValue shouldBe Seq(
       Person("John Smith", 32),
       Person("Albert Einstein", 65),
-      Person("Jane Smith", 1)
+      Person("Jane Smith", 29)
     )
 
   }
