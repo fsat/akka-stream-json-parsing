@@ -20,7 +20,7 @@ class StreamingJsonParseTest extends FunSpec with BeforeAndAfterAll with Matcher
     implicit val materializer = ActorMaterializer()
 
     // read 1 byte at a time
-    val inputStreamSource = InputStreamSource(() => this.getClass.getResourceAsStream(json), chunkSize = 1)
+    val inputStreamSource = InputStreamSource(() => this.getClass.getResourceAsStream(json))
     val personSource = StreamingJsonParse.parse(inputStreamSource, Person.JsonFormat.personFormat)
 
     val result = personSource.runFold(Seq.empty[Person])(_ :+ _)

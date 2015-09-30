@@ -4,12 +4,21 @@ import akka.stream.scaladsl.Source
 import akka.stream.stage._
 import akka.util.ByteString
 import play.api.libs.json.{JsSuccess, Json, Format}
+import scala.collection.immutable.Iterable
 
 import scala.util.{Try, Success}
 
 object StreamingJsonParse {
   def parse[T,X](source: Source[ByteString, T], jsonFormat: Format[X]): Source[X, T] =
-    source.transform(() => new StreamingJsonParsingStage(jsonFormat))
+    source
+      // These next two lines are .flatMap() equivalent of Source
+      .map(splitEachByte) // Source("abc") -> Source(Seq("a", "b", "c"))
+      .mapConcat(identity) // Source(Seq("a", "b", "c")) -> Source("a", "b", "c")
+      // Push each byte into parsing stage
+      .transform(() => new StreamingJsonParsingStage(jsonFormat))
+
+  def splitEachByte(input: ByteString): Iterable[ByteString] =
+    input.map(ByteString.apply(_))
 
   class StreamingJsonParsingStage[T](jsonFormat: Format[T]) extends DetachedStage[ByteString, T] {
     var buffer: Seq[ByteString] = Seq.empty
